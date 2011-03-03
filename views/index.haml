@@ -1,0 +1,88 @@
+!!!
+%html
+  %head
+    %meta(name="viewport" content="minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no")/
+    %meta(content="yes" name="apple-mobile-web-app-capable")/
+    %title Brains !!!
+    %link{:rel=>"stylesheet", :href=>"/css/main.css", :media=>"screen", :type=>"text/css"}
+  %body
+    #map
+
+    %script{:type => "text/javascript", :src => "http://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.js"}
+    %script{:type => "text/javascript", :src => "http://tile.cloudmade.com/wml/latest/web-maps-lite.js"}
+
+    :javascript
+      $(document).ready(function() {
+        var cloudmade = new CM.Tiles.CloudMade.Web({
+          key: '477e8bb9195c4d5dae0d1ca120adb1d7',
+          styleId: 999
+        });
+        var map = null;
+        var playerMarker = null;
+        var zombieMarkers = [];
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            map = new CM.Map('map', cloudmade);
+
+            updateGeo(position);
+            navigator.geolocation.watchPosition(updateGeo, errorHandler);
+          }, errorHandler);
+        }
+
+        function errorHandler(error) {
+          switch(error.code) {
+            case error.TIMEOUT:
+              console.log('Timeout');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              console.log('Position unavailable');
+              break;
+            case error.PERMISSION_DENIED:
+              console.log('Permission denied');
+              break;
+            case error.UNKNOWN_ERROR:
+              console.log('Unknown error');
+              break;
+          }
+        }
+
+        function updateGeo (position) {
+          console.log(position.coords.latitude, position.coords.longitude);
+          var cm_pos = new CM.LatLng(position.coords.latitude, position.coords.longitude);
+
+          var old_player_pos = null;
+          map.setCenter(cm_pos, 18);
+          if(playerMarker == null) {
+            old_player_pos = cm_pos;
+            var playerIcon = new CM.Icon();
+            playerIcon.image = "/images/awesome.png";
+            playerIcon.iconSize = new CM.Size(32, 32);
+
+            playerMarker = new CM.Marker(cm_pos, {
+              title: "It's You",
+              icon: playerIcon
+            });
+
+            map.addOverlay(playerMarker);
+          } else {
+            old_player_pos = playerMarker.getLatLng();
+            playerMarker.setLatLng(cm_pos);
+          }
+
+          var zombieIcon =  new CM.Icon();
+          zombieIcon.image =  "/images/zombie.png";
+          zombieIcon.iconSize = new CM.Size(32, 32);
+          var pix_p = map.fromLatLngToDivPixel(cm_pos);
+          var pix_z = new CM.Point( (Math.random() * 26 + 25) + pix_p.x, (Math.random() * 26 + 25) + pix_p.y );
+          var pos_z = map.fromDivPixelToLatLng(pix_z);
+
+          var zombieMarker = new CM.Marker(pos_z, {
+            title: "Brains !!!!",
+            icon: zombieIcon
+          });
+
+          map.addOverlay(zombieMarker);
+          zombieMarkers.append(zombieMarker);
+        }
+      });
